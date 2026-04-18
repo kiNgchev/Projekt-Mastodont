@@ -1,0 +1,63 @@
+/*
+ *  Stahl geist
+ *  Copyright (C) 2025 kiNgchev
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package net.kingchev.serafim.config
+
+import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
+import com.github.philippheuer.events4j.simple.SimpleEventHandler
+import net.kingchev.serafim.SerafimBotApplication
+import net.kingchev.serafim.SerafimClient
+import net.kingchev.serafim.SerafimClientBuilder
+import org.slf4j.LoggerFactory
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+
+
+@Configuration
+@EnableConfigurationProperties(value = [SerafimProperties::class, SerafimProperties.Tokens::class])
+public class SerafimConfiguration(private val props: SerafimProperties) {
+    @Bean
+    public fun simpleEventHandler(client: SerafimClient): SimpleEventHandler =
+        client
+            .eventManager
+            .getEventHandler(SimpleEventHandler::class.java)
+
+    @Bean
+    public fun serafimClient(): SerafimClient {
+        val client = SerafimClientBuilder.builder()
+            .withChatAccount(OAuth2Credential("twitch", props.tokens.irc))
+            .withEnableChat(true)
+            .withClientId(props.tokens.clientId)
+            .withClientSecret(props.tokens.clientSecret)
+            .withEnableHelix(true)
+            .build()
+
+        props.twitchChannel.forEach {
+            client.chat.joinChannel(it)
+            logger.info("Serafim joined to $it ")
+        }
+
+        client.clientHelper.enableStreamEventListener(props.twitchChannel)
+        return client
+    }
+
+    public companion object {
+        private val logger = LoggerFactory.getLogger(SerafimBotApplication::class.java)
+    }
+}
