@@ -15,18 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.kingchev.command.model
+package net.kingchev.model.bots
 
-import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import java.io.Serializable
 
-public interface NivoraCommand {
-    public suspend fun validate(event: GuildChatInputCommandInteractionCreateEvent): Boolean
-
-    public suspend fun execute(event: GuildChatInputCommandInteractionCreateEvent)
-
-    public companion object {
-        public val logger: Logger = LoggerFactory.getLogger(NivoraCommand::class.java)
-    }
+public enum class NotificationType {
+    LIVE_NOTIFICATION
 }
+
+public data class NotificationMessage(
+    var id: String,
+    var source: String,
+    var title: String,
+    var text: String,
+    var url: String? = null,
+    var type: NotificationType
+) : Serializable
